@@ -47,8 +47,8 @@ def search():
 
         existing_uni = Universities.query.filter_by(domain=uni_domain).first()
         if not existing_uni:
-            university = Universities(name=uni_name, domain=uni_domain, website=uni_website, country=located_country)
-            db.session.add(university)
+            university_add = Universities(name=uni_name, domain=uni_domain, website=uni_website, country=located_country)
+            db.session.add(university_add)
     db.session.commit()
 
     # 3. Retrieve universities from DB to display
@@ -65,8 +65,8 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        user = Users(username = form.username.data, email = form.email.data, password = hashed_password)
-        db.session.add(user)
+        user_add = Users(username = form.username.data, email = form.email.data, password = hashed_password)
+        db.session.add(user_add)
         db.session.commit()
         flash(f'Your account has been created!You can now log in')
         return redirect(url_for('login'))
