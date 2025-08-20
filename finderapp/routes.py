@@ -4,7 +4,7 @@ import requests,re
 from finderapp.forms import RegistrationForm,LoginForm
 from finderapp.models import Users,Universities,Favorites
 from flask_login import login_user,current_user,logout_user
-
+from sqlalchemy.exc import IntegrityError
 
 
 
@@ -44,15 +44,18 @@ def search():
         located_country = item['country']
         uni_domain = item['domains'][0]
         uni_website = item['web_pages'][0]
-
-        existing_uni = Universities.query.filter_by(domain=uni_domain).first()
+        with db.session.no_autoflush:
+            existing_uni = Universities.query.filter_by(domain=uni_domain,website=uni_website).first()
         if not existing_uni:
             university_add = Universities(name=uni_name, domain=uni_domain, website=uni_website, country=located_country)
             db.session.add(university_add)
-    db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()    
 
     # 3. Retrieve universities from DB to display
-    universities = Universities.query.filter_by(country=country).all()
+    universities = Universities.query.filter(Universities.country.ilike(f"%{country.strip()}%")).all()
     return render_template('result.html', universities=universities, country=country)
 
 
