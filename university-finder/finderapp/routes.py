@@ -53,15 +53,21 @@ def search():
             db.session.commit()
         except IntegrityError:
             db.session.rollback()    
-
+    
     # 3. Retrieve universities from DB to display
     universities = Universities.query.filter(Universities.country.ilike(f"%{country.strip()}%")).all()
-    return render_template('result.html', universities=universities, country=country)
+    # 4. Collect user's favorites
+    if current_user.is_authenticated:
+        user_favorite_ids = [fav.university_id for fav in Favorites.query.filter_by(user_id=current_user.id).all()]
+    else:
+        user_favorite_ids = []
+
+    return render_template('result.html', universities=universities, country=country,user_favorite_ids=user_favorite_ids)
 
 
 
 
-@app.route('/registration', methods=['POST'])
+@app.route('/registration', methods=['POST','GET'])
 def register():
     if current_user.is_authenticated:
          return redirect(url_for('home'))
@@ -109,8 +115,8 @@ def favorite(uni_id):
         return redirect(url_for('login'))
 
     # Add favorite if not already present
-    existing = Favorites.query.filter_by(user_id=current_user.id, university_id=uni_id).first()
-    if not existing:
+    existing_favorite = Favorites.query.filter_by(user_id=current_user.id, university_id=uni_id).first()
+    if not existing_favorite:
         favorite_add = Favorites(user_id=current_user.id, university_id=uni_id)
         db.session.add(favorite_add)
         db.session.commit()
@@ -122,6 +128,7 @@ def favorite(uni_id):
     country = request.form.get('country')
     return redirect(url_for('search', country=country))
 
+
 @app.route('/favorites', methods=['GET'])
 def favorites():
     if not current_user.is_authenticated:
@@ -131,4 +138,29 @@ def favorites():
     
     favorites = Favorites.query.filter_by(user_id=current_user.id).all()
     
-    return render_template('favorites.html', favorites=favorites)
+    return render_template('favorite.html', favorites=favorites)
+
+
+
+@app.route('/remove_favorite/<int:uni_id>', methods=['POST'])
+def remove_favorite(uni_id):
+    if not current_user.is_authenticated:
+        flash('Please login to remove from favorites')
+        return redirect(url_for('login'))
+
+    exsiting_favorite = Favorites.query.filter_by(user_id= current_user.id,university_id=uni_id).first()
+    if exsiting_favorite:
+        db.session.delete(exsiting_favorite)
+        db.session.commit()
+        flash('University removed from favorites')
+
+    next_page = request.form.get('next')
+    if next_page == 'favorites':
+        return redirect(url_for('favorites'))
+    else:
+        country=request.form.get('country')
+        return redirect(url_for('search',country=country)) 
+
+
+
+

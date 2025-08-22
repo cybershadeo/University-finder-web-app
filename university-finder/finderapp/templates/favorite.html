@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Favorites</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
 </head>
 <body>
@@ -12,10 +12,16 @@
     <div>
         <ul>
             {% for fav in favorites %}
-            <li>
-                {{ fav.univerity.name }} - {{fav.university.country}
-                <a href="{{fav.university.website}}" target="blank">Visit website</a>
-            </li>
+                <li>
+                    {{ fav.university.name }} - {{fav.university.country}}
+                    <a href="{{fav.university.website}}" target="blank">Visit website</a>
+                </li>
+                
+                 <form action="{{ url_for('remove_favorite', uni_id=fav.university.id) }}" method="post" style="display:inline;">
+                    <input type="hidden" name="next" value="favorites">
+                    <button type="submit" class="favorite-btn">Remove from Favorites</button>
+                </form>
+                 
             {% endfor %}
         </ul>
     </div>
